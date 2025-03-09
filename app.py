@@ -6,12 +6,13 @@ from flask_cors import CORS
 from io import BytesIO
 from dotenv import load_dotenv  
 
-
+# Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  
 
+# Get API keys and URLs from environment variables
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 BASE_URL = os.getenv("BASE_URL")
 FORECAST_URL = os.getenv("FORECAST_URL")
@@ -37,14 +38,14 @@ def get_weather():
         rain_status = f"Rain volume in the last 1 hour: {rain.get('1h', 0)} mm" if rain else "No rain"
 
         weather_data = {
-    "city": data["name"],
-    "temperature": data["main"]["temp"],
-    "feels_like": data["main"]["feels_like"],
-    "humidity": data["main"]["humidity"],
-    "winds": f"{round(data['wind']['speed'] * 2.237, 1)} mph",  # Converts m/s to mph
-    "sky_condition": data["weather"][0]["description"].title(),  # Fix here
-    "rain": f"Rain volume in last hour: {data.get('rain', {}).get('1h', 0)} mm" if "rain" in data else "No rain",
-}
+            "city": data["name"],
+            "temperature": data["main"]["temp"],
+            "feels_like": data["main"]["feels_like"],
+            "humidity": data["main"]["humidity"],
+            "winds": f"{round(data['wind']['speed'] * 2.237, 1)} mph",  # Converts m/s to mph
+            "sky_condition": data["weather"][0]["description"].title(),
+            "rain": f"Rain volume in last hour: {data.get('rain', {}).get('1h', 0)} mm" if "rain" in data else "No rain",
+        }
 
         return jsonify(weather_data)
 
@@ -96,4 +97,6 @@ def get_hourly():
     return jsonify({"error": "City not found."}), 404
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Use the dynamic port provided by Render, default to 5000 if not set
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
