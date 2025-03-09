@@ -96,4 +96,4 @@ def get_hourly():
     return jsonify({"error": "City not found."}), 404
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
