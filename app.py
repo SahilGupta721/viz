@@ -10,7 +10,7 @@ load_dotenv()
 
 app = Flask(__name__)
 # Allow requests from any origin (for development, production, etc.)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}}) 
+CORS(app, resources={r"/*": {"origins": "https://vizweather.vercel.app/"}}) 
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 BASE_URL = os.getenv("BASE_URL")
