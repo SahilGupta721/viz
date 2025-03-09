@@ -10,7 +10,7 @@ load_dotenv()
 
 app = Flask(__name__)
 # Allow requests from any origin (for development, production, etc.)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Allows all domains to access
+CORS(app)
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 BASE_URL = os.getenv("BASE_URL")
@@ -18,6 +18,13 @@ FORECAST_URL = os.getenv("FORECAST_URL")
 
 if not API_KEY or not BASE_URL or not FORECAST_URL:
     raise ValueError("Missing required environment variables. Check your .env file.")
+@app.after_request
+def apply_cors(response):
+    # You can set the origin to a specific URL if needed
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
 
 # Fetch weather data for the city
 @app.route("/weather", methods=["GET"])
