@@ -93,7 +93,7 @@ def get_hourly():
             plt.tight_layout()
 
             img = BytesIO()
-            plt.savefig(img, format='png')
+            plt.savefig(img, format='png',transparent=True)
             img.seek(0)
 
             return send_file(img, mimetype='image/png', as_attachment=False, download_name='forecast.png')
