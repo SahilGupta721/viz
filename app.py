@@ -2,15 +2,15 @@ import os
 import requests
 import matplotlib.pyplot as plt
 from flask import Flask, jsonify, request, send_file
-from flask_cors import CORS
+from flask_cors import CORS  # CORS import
 from io import BytesIO
 from dotenv import load_dotenv  
-
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  
+# Allow requests from any origin (for development, production, etc.)
+CORS(app, resources={r"/*": {"origins": "https://vizweather.vercel.app"}}) 
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 BASE_URL = os.getenv("BASE_URL")
@@ -18,6 +18,13 @@ FORECAST_URL = os.getenv("FORECAST_URL")
 
 if not API_KEY or not BASE_URL or not FORECAST_URL:
     raise ValueError("Missing required environment variables. Check your .env file.")
+@app.after_request
+def apply_cors(response):
+    # You can set the origin to a specific URL if needed
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
 
 # Fetch weather data for the city
 @app.route("/weather", methods=["GET"])
@@ -37,14 +44,14 @@ def get_weather():
         rain_status = f"Rain volume in the last 1 hour: {rain.get('1h', 0)} mm" if rain else "No rain"
 
         weather_data = {
-    "city": data["name"],
-    "temperature": data["main"]["temp"],
-    "feels_like": data["main"]["feels_like"],
-    "humidity": data["main"]["humidity"],
-    "winds": f"{round(data['wind']['speed'] * 2.237, 1)} mph",  # Converts m/s to mph
-    "sky_condition": data["weather"][0]["description"].title(),  # Fix here
-    "rain": f"Rain volume in last hour: {data.get('rain', {}).get('1h', 0)} mm" if "rain" in data else "No rain",
-}
+            "city": data["name"],
+            "temperature": data["main"]["temp"],
+            "feels_like": data["main"]["feels_like"],
+            "humidity": data["main"]["humidity"],
+            "winds": f"{round(data['wind']['speed'] * 2.237, 1)} mph",  # Converts m/s to mph
+            "sky_condition": data["weather"][0]["description"].title(),
+            "rain": f"Rain volume in last hour: {data.get('rain', {}).get('1h', 0)} mm" if "rain" in data else "No rain",
+        }
 
         return jsonify(weather_data)
 
@@ -86,8 +93,8 @@ def get_hourly():
             plt.tight_layout()
 
             img = BytesIO()
-            plt.savefig(img, format='png')
-            img.seek(0) 
+            plt.savefig(img, format='png',transparent=True)
+            img.seek(0)
 
             return send_file(img, mimetype='image/png', as_attachment=False, download_name='forecast.png')
 
@@ -96,4 +103,4 @@ def get_hourly():
     return jsonify({"error": "City not found."}), 404
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
