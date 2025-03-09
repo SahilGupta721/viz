@@ -2,17 +2,16 @@ import os
 import requests
 import matplotlib.pyplot as plt
 from flask import Flask, jsonify, request, send_file
-from flask_cors import CORS
+from flask_cors import CORS  # CORS import
 from io import BytesIO
 from dotenv import load_dotenv  
 
-# Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  
+# Allow requests from any origin (for development, production, etc.)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allows all domains to access
 
-# Get API keys and URLs from environment variables
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 BASE_URL = os.getenv("BASE_URL")
 FORECAST_URL = os.getenv("FORECAST_URL")
@@ -88,7 +87,7 @@ def get_hourly():
 
             img = BytesIO()
             plt.savefig(img, format='png')
-            img.seek(0) 
+            img.seek(0)
 
             return send_file(img, mimetype='image/png', as_attachment=False, download_name='forecast.png')
 
@@ -97,6 +96,4 @@ def get_hourly():
     return jsonify({"error": "City not found."}), 404
 
 if __name__ == "__main__":
-    # Use the dynamic port provided by Render, default to 5000 if not set
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(debug=True)
