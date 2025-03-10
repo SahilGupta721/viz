@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-# Allow requests from any origin (for development, production, etc.)
 CORS(app, resources={r"/*": {"origins": "https://vizweather.vercel.app"}}) 
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
@@ -18,15 +17,14 @@ FORECAST_URL = os.getenv("FORECAST_URL")
 
 if not API_KEY or not BASE_URL or not FORECAST_URL:
     raise ValueError("Missing required environment variables. Check your .env file.")
+
 @app.after_request
 def apply_cors(response):
-    # You can set the origin to a specific URL if needed
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 
-# Fetch weather data for the city
 @app.route("/weather", methods=["GET"])
 def get_weather():
     city = request.args.get("city")
@@ -39,16 +37,12 @@ def get_weather():
     if response.status_code == 200:
         data = response.json()
 
-        # Check for rain in the response
-        rain = data.get("rain", {})
-        rain_status = f"Rain volume in the last 1 hour: {rain.get('1h', 0)} mm" if rain else "No rain"
-
         weather_data = {
             "city": data["name"],
             "temperature": data["main"]["temp"],
             "feels_like": data["main"]["feels_like"],
             "humidity": data["main"]["humidity"],
-            "winds": f"{round(data['wind']['speed'] * 2.237, 1)} mph",  # Converts m/s to mph
+            "winds": f"{round(data['wind']['speed'] * 2.237, 1)} mph",
             "sky_condition": data["weather"][0]["description"].title(),
             "rain": f"Rain volume in last hour: {data.get('rain', {}).get('1h', 0)} mm" if "rain" in data else "No rain",
         }
@@ -57,7 +51,6 @@ def get_weather():
 
     return jsonify({"error": "City not found."}), response.status_code
 
-# Generate hourly forecast graph for the city
 @app.route("/hourly", methods=["GET"])
 def get_hourly():
     city = request.args.get("city")
@@ -77,23 +70,27 @@ def get_hourly():
         if forecast_response.status_code == 200:
             forecast_data = forecast_response.json()
 
-            # Extract hours and temperatures from forecast data
+            # Extract hours and temperatures
             hours = [entry["dt_txt"].split(" ")[1][:5] for entry in forecast_data["list"][:8]]
             temperatures = [entry["main"]["temp"] for entry in forecast_data["list"][:8]]
 
-            # Create a temperature vs time graph
-            plt.figure(figsize=(10, 6))
-            plt.plot(hours, temperatures, marker="o", color="b", label="Temperature (°C)")
-            plt.title(f"Hourly Temperature Forecast for {city}")
-            plt.xlabel("Time (HH:MM)")
-            plt.ylabel("Temperature (°C)")
-            plt.xticks(rotation=45)
-            plt.grid(True)
-            plt.legend()
-            plt.tight_layout()
+            # Create a transparent graph with white text
+            plt.figure(figsize=(10, 6), facecolor='none')  
+            plt.plot(hours, temperatures, marker="o", color="white", label="Temperature (°C)")
+
+            plt.title(f"Hourly Temperature Forecast for {city}", color="white")
+            plt.xlabel("Time (HH:MM)", color="white")
+            plt.ylabel("Temperature (°C)", color="white")
+
+            plt.xticks(rotation=45, color="white")
+            plt.yticks(color="white")
+            plt.grid(True, linestyle="--", color="gray")
+            plt.legend(facecolor='none', edgecolor='white')
+
+            plt.gca().set_facecolor("none")  # Transparent plot background
 
             img = BytesIO()
-            plt.savefig(img, format='png',transparent=True)
+            plt.savefig(img, format='png', transparent=True, bbox_inches='tight')  
             img.seek(0)
 
             return send_file(img, mimetype='image/png', as_attachment=False, download_name='forecast.png')
