@@ -25,6 +25,10 @@ def apply_cors(response):
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 
+@app.route("/", methods=["GET"])
+def home():
+    return "Welcome to VizWeather (backend)"
+
 @app.route("/weather", methods=["GET"])
 def get_weather():
     city = request.args.get("city")
